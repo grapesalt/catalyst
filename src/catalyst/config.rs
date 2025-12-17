@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::fs;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub site_title: String,
     pub site_logo: String,

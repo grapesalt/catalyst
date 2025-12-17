@@ -1,24 +1,49 @@
-use crate::catalyst::{config::Config, posts::Post};
-
-use glob::glob;
+use clap::{Parser, Subcommand};
 
 mod catalyst;
 
+#[derive(Parser)]
+#[command(name = "catalyst")]
+#[command(about = "A static site generator", long_about = None)]
+struct Cli {
+    /// Path to config file
+    #[arg(short, long, default_value = "catalyst.yaml")]
+    config: String,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Build the site
+    Build,
+    /// Run the site
+    Run {
+        #[arg(short = 's', long, default_value = "false")]
+        serve: bool,
+    },
+    /// Create a new post with the given title
+    Add {
+        title: String,
+        #[arg(short = 'd', long)]
+        directory: Option<String>,
+    },
+}
+
 fn main() {
-    let config = Config::load_from_file("config.yaml");
+    let cli = Cli::parse();
+    let config = catalyst::config::Config::load_from_file(&cli.config);
 
-    let mut posts: Vec<Post> = Vec::new();
-
-    // Process all markdown files in the content directory
-    glob(&format!("{}/**/*.md", config.content_dir))
-        .expect("Failed to read glob pattern")
-        .for_each(|entry| {
-            let path = entry.expect("Failed to read entry");
-            posts.push(catalyst::render::process_markdown(
-                &config,
-                path.to_str().unwrap(),
-            ));
-        });
-
-    catalyst::posts::generate_index(&config, &posts);
+    match cli.command {
+        Commands::Build => {
+            catalyst::commands::build(&config);
+        }
+        Commands::Run { serve } => {
+            catalyst::commands::run(&config, serve);
+        }
+        Commands::Add { title, directory } => {
+            catalyst::commands::add(&config, &title, &directory);
+        }
+    }
 }

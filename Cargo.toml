@@ -1,6 +1,6 @@
 [package]
 name = "catalyst"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 
 [dependencies]
@@ -8,3 +8,8 @@ pulldown-cmark = "0.13.0"
 glob = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
+clap = { version = "4.5.53", features = ["derive"] }
+chrono = "0.4"
+file-serve = "0.3.10"
+open = "5.3.3"
+notify = "8.1.0"
