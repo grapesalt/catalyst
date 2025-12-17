@@ -1,0 +1,10 @@
+[package]
+name = "catalyst"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pulldown-cmark = "0.13.0"
+glob = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"

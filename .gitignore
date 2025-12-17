@@ -1,0 +1,10 @@
+/target
+/.DS_Store
+/.vscode
+
+# Ignore build and content directories
+
+output
+build
+public
+content
