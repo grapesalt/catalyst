@@ -6,13 +6,19 @@ use std::{
 use walkdir::WalkDir;
 
 use crate::catalyst::{
+    cache,
     config::Config,
     posts::{self, Post},
     render,
 };
 
-pub fn build(config: &Config) -> Vec<Post> {
+pub fn build(config: &Config, incremental: bool) -> Vec<Post> {
     let mut posts: Vec<Post> = Vec::new();
+    let mut cache = if incremental {
+        cache::BuildCache::load(&config)
+    } else {
+        cache::BuildCache::default()
+    };
 
     for file in WalkDir::new(&config.entries)
         .into_iter()
@@ -20,15 +26,28 @@ pub fn build(config: &Config) -> Vec<Post> {
         .filter(|e| e.file_type().is_file())
     {
         if file.path().extension() == Some(OsStr::new("md")) {
-            posts.push(render::process_markdown(
-                &config,
-                file.path().to_str().unwrap(),
-            ));
+            let modified_time = file.metadata().unwrap().modified().unwrap();
+            let slug = file
+                .path()
+                .strip_prefix(&config.entries)
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .replace(".md", "");
+
+            if !incremental || cache.posts.get(&slug) < Some(&modified_time) {
+                print!("Building {}...\n", file.path().display());
+                posts.push(render::process_markdown(
+                    &config,
+                    file.path().to_str().unwrap(),
+                ));
+                cache.posts.insert(slug, modified_time);
+            }
         }
     }
 
     posts::generate_index(&config, &posts);
-
+    cache.save(&config);
     posts
 }
 
@@ -78,10 +97,10 @@ fn slugs_to_path(config: &Config, posts: &Vec<Post>) -> HashSet<PathBuf> {
     paths
 }
 
-pub fn watch(config: &Config) {
-    let mut posts = build(config);
-
+pub fn watch(config: &Config, incremental: bool) {
+    let mut posts = build(config, incremental);
     let mut post_paths = slugs_to_path(config, &posts);
+    let mut cache = cache::BuildCache::load(&config);
 
     println!("Watching for changes. Press Ctrl+C to stop.");
 
@@ -117,13 +136,27 @@ pub fn watch(config: &Config) {
                         // TODO: This basically assumes that the directory the user supplied is relative
                         // Which is probably the case but still, only siths deal in absolutes.
 
-                        let stripped_path = path
+                        let rel_path = path
                             .strip_prefix(std::env::current_dir().unwrap())
                             .unwrap()
                             .to_str()
                             .unwrap();
 
-                        render::process_markdown(&config, stripped_path);
+                        render::process_markdown(&config, rel_path);
+
+                        // Update the cache
+                        if let Ok(modified_time) =
+                            path.metadata().unwrap().modified()
+                        {
+                            let slug = rel_path
+                                .strip_prefix(&config.entries)
+                                .unwrap()
+                                .trim_start_matches('/')
+                                .replace(".md", "");
+
+                            cache.posts.insert(slug, modified_time);
+                            cache.save(&config);
+                        }
 
                         // Checks if the changed file is a new post
                         // Does not rebuild index.html if a title or date changes
@@ -133,8 +166,7 @@ pub fn watch(config: &Config) {
                                 "New post detected. Building index.html..."
                             );
                             posts.push(render::process_markdown(
-                                &config,
-                                stripped_path,
+                                &config, rel_path,
                             ));
                             post_paths.insert(path.clone());
                             posts::generate_index(&config, &posts);
@@ -149,7 +181,8 @@ pub fn watch(config: &Config) {
 }
 
 pub fn list(config: &Config) {
-    let posts = build(&config);
+    // There's literally no point in not having incrememtal builds here
+    let posts = build(&config, true);
     println!("Posts:");
 
     for post in posts {

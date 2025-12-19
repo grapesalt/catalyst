@@ -22,12 +22,16 @@ enum Commands {
     Build {
         #[arg(short, long, default_value = "false")]
         purge: bool,
+        #[arg(long = "disable-incremental", default_value = "false")]
+        incremental: bool,
     },
 
     /// Watch the site for changes
     Watch {
         #[arg(short, long, default_value = "false")]
         purge: bool,
+        #[arg(long = "disable-incremental", default_value = "false")]
+        incremental: bool,
     },
 
     /// Create a new post with the given title
@@ -42,8 +46,8 @@ enum Commands {
 }
 
 fn purge_output(config: &catalyst::config::Config) {
-    fs::remove_dir_all(&config.build)
-        .expect("Failed to purge output directory");
+    let _ = fs::remove_dir_all(&config.build);
+    let _ = fs::remove_file(&config.cache);
 }
 
 fn main() {
@@ -51,19 +55,25 @@ fn main() {
     let config = catalyst::config::Config::load_from_file(&cli.config);
 
     match cli.command {
-        Commands::Build { purge } => {
+        Commands::Build { purge, incremental } => {
             if purge {
                 purge_output(&config);
             }
 
-            catalyst::commands::build(&config);
+            catalyst::commands::build(
+                &config,
+                config.incremental && !incremental,
+            );
         }
-        Commands::Watch { purge } => {
+        Commands::Watch { purge, incremental } => {
             if purge {
                 purge_output(&config);
             }
 
-            catalyst::commands::watch(&config);
+            catalyst::commands::watch(
+                &config,
+                config.incremental && !incremental,
+            );
         }
         Commands::Add { title, folder } => {
             catalyst::commands::add(&config, &title, &folder);

@@ -10,6 +10,10 @@ pub struct Config {
     pub theme: String,
     #[serde(default)]
     pub containers: Option<String>,
+    #[serde(default = "default_incremental")]
+    pub incremental: bool,
+    #[serde(default = "default_cache_path")]
+    pub cache: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -35,4 +39,12 @@ impl ContainerConfig {
         serde_yaml::from_str::<HashMap<String, Self>>(&raw_yaml)
             .expect("Failed to parse container file")
     }
+}
+
+fn default_cache_path() -> String {
+    ".catalyst-cache.yaml".to_string()
+}
+
+fn default_incremental() -> bool {
+    true
 }

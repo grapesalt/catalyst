@@ -57,3 +57,16 @@ theme: "static"
 ## Theme
 
 Your theme directory should include a `template.html` which is used for the posts, and a `index.html` which is used for, you guessed it, the `index` file.
+
+## Roadmap
+
+- [x] Incremental builds
+- [ ] Handle paths properly
+- [ ] Add an actual template engine
+- [ ] Add tags/categories
+- [ ] Better errors
+- [ ] RSS feed
+- [ ] Sitemap
+- [ ] Static assets
+- [ ] Image optimization
+- [ ] TOC

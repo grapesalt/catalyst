@@ -3,3 +3,5 @@ logo: "logo.png"
 entries: "content"
 build: "public"
 theme: "static"
+cache: ".catalyst-cache.yaml"
+# incremental: false
