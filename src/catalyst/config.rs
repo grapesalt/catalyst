@@ -3,12 +3,13 @@ use std::{collections::HashMap, fs};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
-    pub site_title: String,
-    pub site_logo: String,
-    pub content_dir: String,
-    pub output_dir: String,
-    pub theme_dir: String,
-    pub container_path: String,
+    pub title: String,
+    pub logo: String,
+    pub entries: String,
+    pub build: String,
+    pub theme: String,
+    #[serde(default)]
+    pub containers: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

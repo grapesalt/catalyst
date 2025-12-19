@@ -16,18 +16,12 @@ cargo build --release
 cargo run -- build
 ```
 
-### Run the site
+### Watch the site
 
 Watches for file changes and automatically rebuilds.
 
 ```bash
-cargo run -- run
-```
-
-Serves the pre-built site on a local development server. Does not support hot-reloading.
-
-```bash
-cargo run -- run --serve
+cargo run -- watch
 ```
 
 ### Create a new post
@@ -36,10 +30,16 @@ cargo run -- run --serve
 cargo run -- add "My Post Title"
 ```
 
-Create a post in a subdirectory:
+Create a post in a subfolder:
 
 ```bash
-cargo run -- add "My Post" -d math/calculus
+cargo run -- add "My Post" -f math/calculus
+```
+
+### List all the posts
+
+```bash
+cargo run -- list
 ```
 
 ## Configuration
@@ -47,11 +47,11 @@ cargo run -- add "My Post" -d math/calculus
 Create a `catalyst.yaml` file:
 
 ```yaml
-site_title: "Sample Site"
-site_logo: "logo.png"
-content_dir: "content"
-output_dir: "output"
-theme_dir: "static"
+title: "Sample Site"
+logo: "logo.png"
+entries: "content"
+build: "public"
+theme: "static"
 ```
 
 ## Theme

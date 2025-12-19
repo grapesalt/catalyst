@@ -1,3 +1,5 @@
+use std::fs;
+
 use clap::{Parser, Subcommand};
 
 mod catalyst;
@@ -17,18 +19,31 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Build the site
-    Build,
-    /// Run the site
-    Run {
-        #[arg(short = 's', long, default_value = "false")]
-        serve: bool,
+    Build {
+        #[arg(short, long, default_value = "false")]
+        purge: bool,
     },
+
+    /// Watch the site for changes
+    Watch {
+        #[arg(short, long, default_value = "false")]
+        purge: bool,
+    },
+
     /// Create a new post with the given title
     Add {
         title: String,
-        #[arg(short = 'd', long)]
-        directory: Option<String>,
+        #[arg(short = 'f', long)]
+        folder: Option<String>,
     },
+
+    /// List all posts
+    List,
+}
+
+fn purge_output(config: &catalyst::config::Config) {
+    fs::remove_dir_all(&config.build)
+        .expect("Failed to purge output directory");
 }
 
 fn main() {
@@ -36,14 +51,25 @@ fn main() {
     let config = catalyst::config::Config::load_from_file(&cli.config);
 
     match cli.command {
-        Commands::Build => {
+        Commands::Build { purge } => {
+            if purge {
+                purge_output(&config);
+            }
+
             catalyst::commands::build(&config);
         }
-        Commands::Run { serve } => {
-            catalyst::commands::run(&config, serve);
+        Commands::Watch { purge } => {
+            if purge {
+                purge_output(&config);
+            }
+
+            catalyst::commands::watch(&config);
         }
-        Commands::Add { title, directory } => {
-            catalyst::commands::add(&config, &title, &directory);
+        Commands::Add { title, folder } => {
+            catalyst::commands::add(&config, &title, &folder);
+        }
+        Commands::List => {
+            catalyst::commands::list(&config);
         }
     }
 }

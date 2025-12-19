@@ -13,8 +13,8 @@ pub fn apply(
     let mut template = fs::read_to_string(&template_path)
         .expect("Failed to read template file");
 
-    template = template.replace("{{site_title}}", &config.site_title);
-    template = template.replace("{{site_logo}}", &config.site_logo);
+    template = template.replace("{{site_title}}", &config.title);
+    template = template.replace("{{site_logo}}", &config.logo);
     template = template.replace("{{content}}", &content);
 
     // If there is frontmatter data, replace placeholders
@@ -70,8 +70,12 @@ pub fn process_containers(
     config: &config::Config,
     markdown_input: &str,
 ) -> String {
+    if config.containers.is_none() {
+        return markdown_input.to_string();
+    }
+
     let container_configs =
-        ContainerConfig::load_from_file(&config.container_path);
+        ContainerConfig::load_from_file(&config.containers.as_ref().unwrap());
 
     let mut output = String::new();
     let mut lines = markdown_input.lines();

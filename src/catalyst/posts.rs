@@ -23,9 +23,9 @@ fn generate_posts(posts: &[Post]) -> String {
 
 pub fn generate_index(config: &Config, posts: &Vec<Post>) {
     fs::write(
-        format!("{}/index.html", config.output_dir),
+        format!("{}/index.html", config.build),
         apply(
-            &format!("{}/index.html", config.theme_dir),
+            &format!("{}/index.html", config.theme),
             &config,
             None,
             generate_posts(&posts),

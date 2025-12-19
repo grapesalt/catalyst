@@ -55,7 +55,7 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
     let content = render_html(&markdown_input);
 
     let html = apply(
-        format!("{}/template.html", config.theme_dir).as_str(),
+        format!("{}/template.html", config.theme).as_str(),
         &config,
         Some(&data),
         content,
@@ -64,7 +64,7 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
     // TODO: This is very hacky and needs to be fixed.
     // should use like Path and PathBuf instead of string manipulation
     let output_path = file_path
-        .replace(&config.content_dir, &config.output_dir)
+        .replace(&config.entries, &config.build)
         .replace(".md", ".html");
 
     fs::create_dir_all(std::path::Path::new(&output_path).parent().unwrap())
@@ -97,7 +97,7 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
         .to_string();
 
     let slug = file_path
-        .replace(&config.content_dir, "")
+        .replace(&config.entries, "")
         .replace(".md", "")
         .trim_start_matches('/')
         .to_string();
