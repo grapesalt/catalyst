@@ -1,0 +1,23 @@
+# Define custom containers
+# ------------------------
+#
+# Containers look like this
+#
+# :::container_name
+# arguments
+# content
+# :::
+#
+# The template should look like this
+# <div class="container_name">
+#   <!-- You can use {{0}}, {{1}}, etc. for arguments -->
+#   <!-- If you want what ever is inside the container, use {{content}} -->
+#   {{content}}
+# </div>
+#
+# Arguements should be seperated by lines
+#
+# Pretty simple no?
+youtube:
+  template: static/containers/youtube.html
+  nargs: 1

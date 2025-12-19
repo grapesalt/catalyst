@@ -56,10 +56,8 @@ pub fn add(config: &Config, title: &String, directory: &Option<String>) {
     };
 
     let template = format!(
-        "---\ntitle: {}\ndate: {}\n---\n\n# {}\n",
-        title,
+        "---\ntitle: {title}\ndate: {}\n---\n\n# {title}\n",
         chrono::Local::now().format("%Y-%m-%d"),
-        title
     );
 
     fs::write(&post_path, template).expect("Failed to create post");
@@ -112,9 +110,19 @@ pub fn run(config: &Config, serve: bool) {
                     for path in event.paths {
                         if path.extension() == Some(OsStr::new("md")) {
                             println!("Building {:?}", path);
+
+                            // TODO: This basically assumes that the directory the user supplied is relative
+                            // Which is probably the case but still, only siths deal in absolutes.
+
+                            let stripped_path = path
+                                .strip_prefix(std::env::current_dir().unwrap())
+                                .unwrap()
+                                .to_str()
+                                .unwrap();
+
                             render::process_markdown(
                                 &config_clone,
-                                path.to_str().unwrap(),
+                                stripped_path,
                             );
 
                             // Checks if the changed file is a new post
@@ -126,7 +134,7 @@ pub fn run(config: &Config, serve: bool) {
                                 );
                                 posts.push(render::process_markdown(
                                     &config_clone,
-                                    path.to_str().unwrap(),
+                                    stripped_path,
                                 ));
                                 post_paths.insert(path.clone());
                                 posts::generate_index(&config_clone, &posts);

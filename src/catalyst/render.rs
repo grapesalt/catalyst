@@ -1,7 +1,11 @@
 use serde_yaml::Value;
 use std::collections::HashMap;
 
-use crate::catalyst::{config::Config, posts::Post, template::apply};
+use crate::catalyst::{
+    config::Config,
+    posts::Post,
+    template::{apply, process_containers},
+};
 
 pub fn render_html(markdown_input: &str) -> String {
     use pulldown_cmark::{Options, Parser, html};
@@ -15,7 +19,6 @@ pub fn render_html(markdown_input: &str) -> String {
     options.insert(Options::ENABLE_SMART_PUNCTUATION);
     options.insert(Options::ENABLE_HEADING_ATTRIBUTES);
     options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
-    options.insert(Options::ENABLE_MATH);
     options.insert(Options::ENABLE_GFM);
     options.insert(Options::ENABLE_DEFINITION_LIST);
     options.insert(Options::ENABLE_WIKILINKS);
@@ -33,7 +36,7 @@ pub fn render_html(markdown_input: &str) -> String {
 pub fn process_markdown(config: &Config, file_path: &str) -> Post {
     use std::fs;
 
-    let markdown_input =
+    let mut markdown_input =
         fs::read_to_string(file_path).expect("Failed to read markdown file");
 
     let mut frontmatter = String::new();
@@ -44,10 +47,13 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
         }
     }
 
+    markdown_input = process_containers(config, &markdown_input);
+
     let data =
         serde_yaml::from_str::<HashMap<String, Value>>(&frontmatter).unwrap();
 
     let content = render_html(&markdown_input);
+
     let html = apply(
         format!("{}/template.html", config.theme_dir).as_str(),
         &config,
@@ -55,6 +61,8 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
         content,
     );
 
+    // TODO: This is very hacky and needs to be fixed.
+    // should use like Path and PathBuf instead of string manipulation
     let output_path = file_path
         .replace(&config.content_dir, &config.output_dir)
         .replace(".md", ".html");
@@ -68,8 +76,7 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
         .get("title")
         .expect(
             format!(
-                "Frontmatter must contain a title field for file: {}",
-                file_path
+                "Frontmatter must contain a title field for file: {file_path}",
             )
             .as_str(),
         )
@@ -81,8 +88,7 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
         .get("date")
         .expect(
             format!(
-                "Frontmatter must contain a date field for file: {}",
-                file_path
+                "Frontmatter must contain a date field for file: {file_path}",
             )
             .as_str(),
         )
