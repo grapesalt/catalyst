@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ config.title }}</title>
+  </head>
+  <body>
+    <h1>{{ config.title }}</h1>
+    <p>Welcome to the site!</p>
+
+    <div id="posts">
+      <ul>
+        {% for post in page.posts %}
+        <li class="post-item">
+          <span>Hello</span>
+          <a class="post-link" href="{{ post.slug }}.html">
+            <span class="post-title">{{ post.title }}</span>
+          </a>
+          - <span class="post-date">{{ post.date }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </body>
+</html>

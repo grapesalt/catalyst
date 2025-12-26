@@ -1,7 +1,7 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs};
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub title: String,
     pub logo: String,
@@ -18,7 +18,6 @@ pub struct Config {
 
 #[derive(Debug, Deserialize)]
 pub struct ContainerConfig {
-    pub nargs: usize,
     pub template: String,
 }
 

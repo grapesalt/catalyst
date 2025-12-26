@@ -1,8 +1,14 @@
 use serde_yaml::Value;
+use std::{collections::HashMap, fs, sync::Arc};
 
 use crate::catalyst::config::{self, ContainerConfig};
 
-use std::{collections::HashMap, fs};
+use lazy_static::lazy_static;
+use minijinja::{Environment, context};
+
+lazy_static! {
+    static ref ENV: Arc<Environment<'static>> = Arc::new(Environment::new());
+}
 
 pub fn apply(
     template_path: &str,
@@ -10,60 +16,89 @@ pub fn apply(
     data: Option<&HashMap<String, Value>>,
     content: String,
 ) -> String {
-    let mut template = fs::read_to_string(&template_path)
+    let template = fs::read_to_string(template_path)
         .expect("Failed to read template file");
 
-    template = template.replace("{{site_title}}", &config.title);
-    template = template.replace("{{site_logo}}", &config.logo);
-    template = template.replace("{{content}}", &content);
+    let ctx = context! {
+        config => config,
+        content => content,
+        page => data
+    };
 
-    // If there is frontmatter data, replace placeholders
-    if let Some(data) = data {
-        for (key, value) in data.iter() {
-            template = template.replace(
-                format!("{{{}}}", key).as_str(),
-                value.as_str().unwrap(),
-            );
+    ENV.render_str(&template, ctx)
+        .expect("template render failed")
+}
+
+fn parse_container_args(lines: &[&str]) -> (HashMap<String, Value>, String) {
+    let mut param_lines: Vec<String> = Vec::new();
+    let mut i: usize = 0;
+
+    while i < lines.len() {
+        let line = lines[i];
+        if line.trim().is_empty() {
+            i += 1;
+            break;
+        }
+        if line.contains(':') {
+            let mut parts = line.splitn(2, ':');
+            let key = parts.next().unwrap_or("").trim();
+            let val = parts.next().unwrap_or("").trim();
+            param_lines.push(format!("{}: {}", key, val));
+            i += 1;
+        } else {
+            param_lines.clear();
+            i = 0;
+            break;
         }
     }
 
-    template
+    let mut params: HashMap<String, Value> = HashMap::new();
+    if !param_lines.is_empty() {
+        let raw_args = param_lines.join("\n");
+        if let Ok(parsed) =
+            serde_yaml::from_str::<HashMap<String, Value>>(&raw_args)
+        {
+            params = parsed;
+        }
+    }
+
+    let content = if param_lines.is_empty() {
+        lines.join("\n")
+    } else {
+        lines[i..].join("\n")
+    };
+
+    (params, content)
 }
 
 fn apply_container(
+    container_name: &String,
     container_config: &ContainerConfig,
     container_string: &String,
 ) -> String {
-    let mut filled_template = fs::read_to_string(&container_config.template)
-        .expect("Failed to read container template file");
+    let lines_all: Vec<&str> = container_string.lines().skip(1).collect();
+    let end = if !lines_all.is_empty() {
+        lines_all.len().saturating_sub(1)
+    } else {
+        0
+    };
+    let lines = &lines_all[..end];
 
-    // Collect all lines, skipping first and last (:::container_name and :::)
-    let lines: Vec<&str> = container_string.lines().skip(1).collect();
+    let (params, content) = parse_container_args(lines);
+    let raw_tmpl =
+        fs::read_to_string(&container_config.template).expect(&format!(
+            "Failed to read container template: {}",
+            &container_config.template
+        ));
 
-    let end = if lines.len() > 0 { lines.len() - 1 } else { 0 };
+    let ctx = context! {
+        container => context! { name => container_name },
+        params => params,
+        content => content,
+    };
 
-    let mut args: Vec<&str> = Vec::new();
-    let mut content_lines: Vec<&str> = Vec::new();
-
-    for (i, line) in lines[0..end].iter().enumerate() {
-        if i < container_config.nargs {
-            args.push(line.trim());
-        } else {
-            content_lines.push(*line);
-        }
-    }
-
-    let content = content_lines.join("\n");
-
-    // TODO: Add regex support for embed links
-    // Currently, some links (e.g., YouTube, Spotify) require specific embed URLs
-    // rather than standard links. Should implement regex-based transformation
-    // on the user side instead of just {{i}}.
-    for (i, arg) in args.iter().enumerate() {
-        filled_template = filled_template.replace(&format!("{{{{{i}}}}}"), arg);
-    }
-
-    filled_template.replace("{{content}}", &content)
+    ENV.render_str(&raw_tmpl, ctx)
+        .expect("template render failed")
 }
 
 pub fn process_containers(
@@ -99,8 +134,11 @@ pub fn process_containers(
                     }
                 }
 
-                let filled_container =
-                    apply_container(container_config, &container_string);
+                let filled_container = apply_container(
+                    &container_name.to_string(),
+                    &container_config,
+                    &container_string,
+                );
                 output.push_str(&filled_container);
             } else {
                 output.push_str(line);

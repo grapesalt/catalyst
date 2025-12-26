@@ -2,6 +2,7 @@ title: "Sample Site"
 logo: "logo.png"
 entries: "content"
 build: "public"
-theme: "static"
+theme: "theme"
+containers: "containers.yaml"
 cache: ".catalyst-cache.yaml"
 # incremental: false

@@ -61,12 +61,21 @@ Your theme directory should include a `template.html` which is used for the post
 ## Roadmap
 
 - [x] Incremental builds
+- [x] Add an actual template engine
+- [ ] sitemap.xml, robots.txt
+- [ ] RSS + JSON feed
+- [ ] Pagination
+- [ ] SEO
+- [ ] Template reloading
+- [ ] Static passthrough
+- [ ] Minify
+- [ ] Fingerprinting
+- [ ] Permalink, Drafts
+- [ ] Date handling
 - [ ] Handle paths properly
-- [ ] Add an actual template engine
 - [ ] Add tags/categories
 - [ ] Better errors
 - [ ] RSS feed
 - [ ] Sitemap
-- [ ] Static assets
 - [ ] Image optimization
 - [ ] TOC

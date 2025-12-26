@@ -1,23 +1,26 @@
 # Define custom containers
 # ------------------------
 #
-# Containers look like this
+# Container blocks use named parameters (YAML-style) followed by a blank line, then content.
 #
 # :::container_name
-# arguments
-# content
+# key: value
+# key2: value2
+#
+# This is the inner content (Markdown) rendered as HTML.
 # :::
 #
-# The template should look like this
+# In the container template, you have:
+# - {{ params.key }} for named parameters
+# - {{ content | safe }} for the inner HTML
+# - {{ config.title }}, {{ config.logo }}, etc. for site config
+#
+# Example template snippet:
 # <div class="container_name">
-#   <!-- You can use {{0}}, {{1}}, etc. for arguments -->
-#   <!-- If you want what ever is inside the container, use {{content}} -->
-#   {{content}}
+#   <iframe src="https://www.youtube.com/embed/{{ params.id }}"></iframe>
+#   <div class="caption">{{ content | safe }}</div>
 # </div>
 #
-# Arguements should be seperated by lines
-#
-# Pretty simple no?
+# Params must be at the top as "key: value" lines. Insert a blank line after params.
 youtube:
-  template: static/containers/youtube.html
-  nargs: 1
+  template: theme/containers/youtube.html

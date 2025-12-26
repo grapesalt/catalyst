@@ -55,7 +55,7 @@ pub fn process_markdown(config: &Config, file_path: &str) -> Post {
     let content = render_html(&markdown_input);
 
     let html = apply(
-        format!("{}/template.html", config.theme).as_str(),
+        format!("{}/post.html", config.theme).as_str(),
         &config,
         Some(&data),
         content,

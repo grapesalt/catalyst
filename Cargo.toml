@@ -22,3 +22,5 @@ clap = { version = "4.5.53", features = ["derive"] }
 chrono = "0.4"
 notify = "8.1.0"
 walkdir = "2.5.0"
+minijinja = "2.14.0"
+lazy_static = "1.4.0"
